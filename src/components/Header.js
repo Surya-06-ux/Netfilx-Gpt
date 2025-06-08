@@ -52,9 +52,10 @@ const Header = () => {
         <div className="flex items-center space-x-4">
           <img
             className="w-10 h-10 cursor-pointer transition-transform duration-300 hover:scale-110 hover:ring-2 hover:ring-red-600 rounded-full"
-            src={user?.photoURL}
+            src={user?.photoURL || "https://i.pravatar.cc/150"}
             alt="User Icon"
           />
+
           <button
             onClick={handleSignOut}
             className="text-white font-semibold bg-red-600 px-4 py-2 rounded-md hover:bg-red-700 transition-colors duration-200"
