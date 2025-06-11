@@ -4,37 +4,35 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect } from "react";
 import { addUser, removeUser } from "../utils/userSlice";
-import { LOGO } from "../utils/constants";
+import { LOGO, SUPPORTED_LANGUAGES } from "../utils/constants";
 import { toggleGptSearchView } from "../utils/gptSlice";
-import { SUPPORTED_LANGUAGES } from "../utils/constants";
 import { changeLanguage } from "../utils/configSlice";
 
 const Header = () => {
   const dispatch = useDispatch();
+
   const navigate = useNavigate();
-  const user = useSelector((store) => store.user);
+  const user = useSelector((store) => store.user); //subscribing to the store
   const showGptSearch = useSelector((store) => store.gpt.showGptSearch);
 
   const handleSignOut = () => {
     signOut(auth)
-      .then(() => {})
+      .then(() => {
+        // Sign-out successful.
+      })
       .catch((error) => {
+        // An error happened.
         navigate("/error");
       });
-  };
-
-  const handleGptSearchCick = () => {
-    dispatch(toggleGptSearchView());
-  };
-
-  const handleLanguageChange = (e) => {
-    dispatch(changeLanguage(e.target.value));
   };
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
+        // User is signed in, see docs for a list of available properties
+        // https://firebase.google.com/docs/reference/js/auth.user
         const { uid, email, displayName, photoURL } = user;
+        //dispatching action
         dispatch(
           addUser({
             uid: uid,
@@ -44,27 +42,34 @@ const Header = () => {
           })
         );
         navigate("/browse");
+        //redirecting user to another page using useNavigate() hook
       } else {
+        // User is signed out
+        // ...
         dispatch(removeUser());
         navigate("/");
       }
     });
-    // unsubscribe when component unmounts
+    //unsubscribe when component unmounts
     return () => unsubscribe();
   }, []);
-  return (
-    <div className="absolute top-0 left-0 w-full px-8 py-4 bg-gradient-to-b from-black/90 to-transparent z-20 flex justify-between items-center">
-      <img
-        className="w-32 md:w-44 transition-transform duration-300 hover:scale-105"
-        src={LOGO}
-        alt="Netflix Logo"
-      />
 
+  const hanldeGptSearchClick = () => {
+    //Toggle GPT Search button
+    dispatch(toggleGptSearchView());
+  };
+  const handleLanguageChange = (e) => {
+    // console.log(e.target.value);
+    dispatch(changeLanguage(e.target.value));
+  };
+  return (
+    <div className="absolute w-screen px-8 py-2 bg-gradient-to-b from-black z-10 flex flex-col md:flex-row justify-between">
+      <img className="w-44 mx-auto md:mx-0" src={LOGO} alt="logo" />
       {user && (
-        <div className="flex items-center space-x-4">
+        <div className="flex p-2 justify-between">
           {showGptSearch && (
             <select
-              className="bg-gray-800 text-white px-4 py-2 rounded-lg cursor-pointer"
+              className="p-2 bg-gray-900 text-white m-2"
               onChange={handleLanguageChange}
             >
               {SUPPORTED_LANGUAGES.map((lang) => (
@@ -75,22 +80,18 @@ const Header = () => {
             </select>
           )}
           <button
-            className="py-2 px-4 mx-4 my-2 bg-purple-800 text-white rounded-lg"
-            onClick={handleGptSearchCick}
+            onClick={hanldeGptSearchClick}
+            className="py-2 px-4 m-2 bg-purple-800 text-white rounded-lg my-2"
           >
-            {showGptSearch ? "Homepage" : "GPT Search"}
+            {showGptSearch ? "Home Page" : "GPT search"}
           </button>
           <img
-            className="w-10 h-10 cursor-pointer transition-transform duration-300 hover:scale-110 hover:ring-2 hover:ring-red-600 rounded-full"
-            src={user?.photoURL || "https://i.pravatar.cc/150"}
-            alt="User Icon"
+            className="hidden md:block w-12 h-12"
+            src={user?.photoURL}
+            alt="usericon"
           />
-
-          <button
-            onClick={handleSignOut}
-            className="text-white font-semibold bg-red-600 px-4 py-2 rounded-md hover:bg-red-700 transition-colors duration-200"
-          >
-            Sign Out
+          <button onClick={handleSignOut} className="font-bold text-white">
+            (Sign out)
           </button>
         </div>
       )}
