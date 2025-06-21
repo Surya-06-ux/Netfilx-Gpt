@@ -27,29 +27,37 @@ const GptSearchBar = () => {
   const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 
   const handleGptSearchClick = async () => {
-    //make an API call to GPT API and get movie results
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
-    const prompt =
-      "Act as a movie recommendation system and suggest some movies for the query" +
-      searchText.current.value +
-      ".only give me names of movies,comma separated like example result given ahead.Example result:Gadar,Sholay,Godzilla,Inception,Interstellar.";
-    const result = await model.generateContent(prompt);
-    const gptResults = await result.response;
-    console.log(gptResults);
-    if (!gptResults.candidates) {
-      // TODO: handle error case
-    }
-    const gptMovies =
-      gptResults.candidates?.[0]?.content?.parts?.[0]?.text.split(",");
-    //for each movie we will search TMDB API
-    const promiseArray = gptMovies.map((movie) => searchMovieTMDB(movie));
-    //array of promises [pro1,pro2,pro3,pro4,pro5]
+    try {
+      const model = genAI.getGenerativeModel({ model: "gemini-pro" }); // downgraded to avoid quota
+      const prompt =
+        "Act as a movie recommendation system and suggest some movies for the query " +
+        searchText.current.value +
+        ". Only give me names of movies, comma separated like: Gadar, Sholay, Godzilla.";
 
-    const tmdbResults = await Promise.all(promiseArray);
-    console.log(tmdbResults);
-    dispatch(
-      addGptMovieResult({ movieNames: gptMovies, movieResults: tmdbResults })
-    );
+      const result = await model.generateContent(prompt);
+      const gptResults = result.response;
+
+      if (!gptResults.candidates) {
+        alert("Gemini API limit exceeded. Try again later.");
+        return;
+      }
+
+      const gptMovies =
+        gptResults.candidates?.[0]?.content?.parts?.[0]?.text.split(",");
+      const promiseArray = gptMovies.map((movie) =>
+        searchMovieTMDB(movie.trim())
+      );
+      const tmdbResults = await Promise.all(promiseArray);
+
+      dispatch(
+        addGptMovieResult({ movieNames: gptMovies, movieResults: tmdbResults })
+      );
+    } catch (error) {
+      console.error("Gemini API Error:", error);
+      alert(
+        "Gemini API Error: You may have exceeded your quota. Try again later."
+      );
+    }
   };
 
   return (
